@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Evolver · Evolution Report</title>
+<style>
+:root{
+  --bg:#0d1117; --panel:#161b22; --panel-2:#1c2330; --line:#2a3340;
+  --fg:#e6edf3; --muted:#8b98a8; --accent:#5b9dff; --good:#3fb950;
+  --warn:#d29922; --bad:#f85149; --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);
+  font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",
+  "PingFang SC","Microsoft YaHei",sans-serif;}
+.wrap{max-width:1100px;margin:0 auto;padding:40px 24px 72px}
+h1{font-size:30px;margin:0 0 6px;letter-spacing:-.02em}
+h2{font-size:19px;margin:38px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.sub{color:var(--muted);margin:0 0 20px}
+.badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;
+  font-weight:600;letter-spacing:.02em}
+.badge.sim{background:rgba(210,153,34,.16);color:var(--warn);border:1px solid rgba(210,153,34,.35)}
+.badge.live{background:rgba(63,185,80,.16);color:var(--good);border:1px solid rgba(63,185,80,.35)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin:22px 0}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+.kpi-label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.kpi-value{font:600 27px/1.25 var(--mono);margin:7px 0 3px}
+.kpi-sub{font-size:12.5px;color:var(--muted)}
+.kpi.good .kpi-value{color:var(--good)}
+.kpi.accent .kpi-value{color:var(--accent)}
+.charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.chart{width:100%;height:auto;display:block}
+.grid{stroke:var(--line);stroke-width:1}
+.axis{fill:var(--muted);font:11px var(--mono)}
+.dot{stroke:var(--bg);stroke-width:2}
+table{width:100%;border-collapse:collapse;font:13.5px var(--mono);margin-top:6px}
+th,td{padding:9px 11px;text-align:right;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;
+   letter-spacing:.04em;background:var(--panel-2)}
+tbody tr:hover{background:rgba(91,157,255,.06)}
+.up{color:var(--good)} .down{color:var(--bad)}
+code{font:12.5px var(--mono);background:var(--panel-2);padding:2px 6px;border-radius:5px;
+  color:#a5d6ff}
+.note{background:var(--panel);border-left:3px solid var(--warn);border-radius:0 10px 10px 0;
+  padding:14px 18px;margin:18px 0;color:#c9d3de;font-size:14px}
+.note strong{color:var(--fg)}
+.skills{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.chip{background:var(--panel-2);border:1px solid var(--line);border-radius:7px;
+  padding:5px 11px;font:12.5px var(--mono);color:#a5d6ff}
+footer{margin-top:44px;padding-top:18px;border-top:1px solid var(--line);
+  color:var(--muted);font-size:12.5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Evolver · 进化报告</h1>
+  <p class="sub"><span class="badge sim">SIMULATED AGENT · mechanism validation</span> &nbsp;·&nbsp; 6 epochs × 10 tasks
+     &nbsp;·&nbsp; 0.03s wall clock</p>
+
+  <div class="kpis">
+    <div class="kpi good"><div class="kpi-label">成功率 Success rate</div><div class="kpi-value">30% -&gt; 100%</div><div class="kpi-sub">pitfall 驱动</div></div>
+    <div class="kpi accent"><div class="kpi-label">平均步数 Avg steps</div><div class="kpi-value">2.80 -&gt; 1.00</div><div class="kpi-sub">↓ 64%</div></div>
+    <div class="kpi accent"><div class="kpi-label">平均 Token</div><div class="kpi-value">1536 -&gt; 613</div><div class="kpi-sub">↓ 60%</div></div>
+    <div class="kpi neutral"><div class="kpi-label">习得技能 / 教训</div><div class="kpi-value">10 / 7</div><div class="kpi-sub">skills / pitfalls</div></div>
+  </div>
+
+  <h2>进化曲线</h2>
+  <div class="charts">
+    <div class="panel">
+      <svg viewBox="0 0 560 190" class="chart" role="img"
+     aria-label="success rate %">
+  <defs>
+    <linearGradient id="g857" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3fb950" stop-opacity="0.28"/>
+      <stop offset="100%" stop-color="#3fb950" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <line x1="46" y1="18.0" x2="544" y2="18.0" class="grid"/><text x="38" y="22.0" class="axis" text-anchor="end">110</text><line x1="46" y1="65.3" x2="544" y2="65.3" class="grid"/><text x="38" y="69.3" class="axis" text-anchor="end">80</text><line x1="46" y1="112.7" x2="544" y2="112.7" class="grid"/><text x="38" y="116.7" class="axis" text-anchor="end">50</text><line x1="46" y1="160.0" x2="544" y2="160.0" class="grid"/><text x="38" y="164.0" class="axis" text-anchor="end">20</text>
+  <polygon points="46,160 46.0,143.6 145.6,34.4 245.2,34.4 344.8,34.4 444.4,34.4 544.0,34.4 544,160" fill="url(#g857)" />
+  <polyline points="46.0,143.6 145.6,34.4 245.2,34.4 344.8,34.4 444.4,34.4 544.0,34.4" fill="none" stroke="#3fb950" stroke-width="2.4"
+            stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="46.0" cy="143.6" r="4" class="dot" style="fill:#3fb950"><title>epoch 0: 30</title></circle><text x="46.0" y="178.0" class="axis" text-anchor="middle">e0</text><circle cx="145.6" cy="34.4" r="4" class="dot" style="fill:#3fb950"><title>epoch 1: 100</title></circle><text x="145.6" y="178.0" class="axis" text-anchor="middle">e1</text><circle cx="245.2" cy="34.4" r="4" class="dot" style="fill:#3fb950"><title>epoch 2: 100</title></circle><text x="245.2" y="178.0" class="axis" text-anchor="middle">e2</text><circle cx="344.8" cy="34.4" r="4" class="dot" style="fill:#3fb950"><title>epoch 3: 100</title></circle><text x="344.8" y="178.0" class="axis" text-anchor="middle">e3</text><circle cx="444.4" cy="34.4" r="4" class="dot" style="fill:#3fb950"><title>epoch 4: 100</title></circle><text x="444.4" y="178.0" class="axis" text-anchor="middle">e4</text><circle cx="544.0" cy="34.4" r="4" class="dot" style="fill:#3fb950"><title>epoch 5: 100</title></circle><text x="544.0" y="178.0" class="axis" text-anchor="middle">e5</text>
+  <text x="46" y="186" class="axis">success rate %</text>
+</svg>
+    </div>
+    <div class="panel">
+      <svg viewBox="0 0 560 190" class="chart" role="img"
+     aria-label="avg steps per task">
+  <defs>
+    <linearGradient id="g2743" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#5b9dff" stop-opacity="0.28"/>
+      <stop offset="100%" stop-color="#5b9dff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <line x1="46" y1="18.0" x2="544" y2="18.0" class="grid"/><text x="38" y="22.0" class="axis" text-anchor="end">3.1</text><line x1="46" y1="65.3" x2="544" y2="65.3" class="grid"/><text x="38" y="69.3" class="axis" text-anchor="end">2.3</text><line x1="46" y1="112.7" x2="544" y2="112.7" class="grid"/><text x="38" y="116.7" class="axis" text-anchor="end">1.5</text><line x1="46" y1="160.0" x2="544" y2="160.0" class="grid"/><text x="38" y="164.0" class="axis" text-anchor="end">0.7</text>
+  <polygon points="46,160 46.0,34.4 145.6,64.7 245.2,143.6 344.8,143.6 444.4,143.6 544.0,143.6 544,160" fill="url(#g2743)" />
+  <polyline points="46.0,34.4 145.6,64.7 245.2,143.6 344.8,143.6 444.4,143.6 544.0,143.6" fill="none" stroke="#5b9dff" stroke-width="2.4"
+            stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="46.0" cy="34.4" r="4" class="dot" style="fill:#5b9dff"><title>epoch 0: 2.8</title></circle><text x="46.0" y="178.0" class="axis" text-anchor="middle">e0</text><circle cx="145.6" cy="64.7" r="4" class="dot" style="fill:#5b9dff"><title>epoch 1: 2.3</title></circle><text x="145.6" y="178.0" class="axis" text-anchor="middle">e1</text><circle cx="245.2" cy="143.6" r="4" class="dot" style="fill:#5b9dff"><title>epoch 2: 1.0</title></circle><text x="245.2" y="178.0" class="axis" text-anchor="middle">e2</text><circle cx="344.8" cy="143.6" r="4" class="dot" style="fill:#5b9dff"><title>epoch 3: 1.0</title></circle><text x="344.8" y="178.0" class="axis" text-anchor="middle">e3</text><circle cx="444.4" cy="143.6" r="4" class="dot" style="fill:#5b9dff"><title>epoch 4: 1.0</title></circle><text x="444.4" y="178.0" class="axis" text-anchor="middle">e4</text><circle cx="544.0" cy="143.6" r="4" class="dot" style="fill:#5b9dff"><title>epoch 5: 1.0</title></circle><text x="544.0" y="178.0" class="axis" text-anchor="middle">e5</text>
+  <text x="46" y="186" class="axis">avg steps per task</text>
+</svg>
+    </div>
+    <div class="panel">
+      <svg viewBox="0 0 560 190" class="chart" role="img"
+     aria-label="avg tokens per task">
+  <defs>
+    <linearGradient id="g2431" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#d29922" stop-opacity="0.28"/>
+      <stop offset="100%" stop-color="#d29922" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <line x1="46" y1="18.0" x2="544" y2="18.0" class="grid"/><text x="38" y="22.0" class="axis" text-anchor="end">1675</text><line x1="46" y1="65.3" x2="544" y2="65.3" class="grid"/><text x="38" y="69.3" class="axis" text-anchor="end">1274</text><line x1="46" y1="112.7" x2="544" y2="112.7" class="grid"/><text x="38" y="116.7" class="axis" text-anchor="end">874</text><line x1="46" y1="160.0" x2="544" y2="160.0" class="grid"/><text x="38" y="164.0" class="axis" text-anchor="end">474</text>
+  <polygon points="46,160 46.0,34.4 145.6,55.9 245.2,143.6 344.8,143.6 444.4,143.6 544.0,143.6 544,160" fill="url(#g2431)" />
+  <polyline points="46.0,34.4 145.6,55.9 245.2,143.6 344.8,143.6 444.4,143.6 544.0,143.6" fill="none" stroke="#d29922" stroke-width="2.4"
+            stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="46.0" cy="34.4" r="4" class="dot" style="fill:#d29922"><title>epoch 0: 1536</title></circle><text x="46.0" y="178.0" class="axis" text-anchor="middle">e0</text><circle cx="145.6" cy="55.9" r="4" class="dot" style="fill:#d29922"><title>epoch 1: 1354</title></circle><text x="145.6" y="178.0" class="axis" text-anchor="middle">e1</text><circle cx="245.2" cy="143.6" r="4" class="dot" style="fill:#d29922"><title>epoch 2: 613</title></circle><text x="245.2" y="178.0" class="axis" text-anchor="middle">e2</text><circle cx="344.8" cy="143.6" r="4" class="dot" style="fill:#d29922"><title>epoch 3: 613</title></circle><text x="344.8" y="178.0" class="axis" text-anchor="middle">e3</text><circle cx="444.4" cy="143.6" r="4" class="dot" style="fill:#d29922"><title>epoch 4: 613</title></circle><text x="444.4" y="178.0" class="axis" text-anchor="middle">e4</text><circle cx="544.0" cy="143.6" r="4" class="dot" style="fill:#d29922"><title>epoch 5: 613</title></circle><text x="544.0" y="178.0" class="axis" text-anchor="middle">e5</text>
+  <text x="46" y="186" class="axis">avg tokens per task</text>
+</svg>
+    </div>
+    <div class="panel">
+      <svg viewBox="0 0 560 190" class="chart" role="img"
+     aria-label="skill hit rate %">
+  <defs>
+    <linearGradient id="g72" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#a371f7" stop-opacity="0.28"/>
+      <stop offset="100%" stop-color="#a371f7" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <line x1="46" y1="18.0" x2="544" y2="18.0" class="grid"/><text x="38" y="22.0" class="axis" text-anchor="end">115</text><line x1="46" y1="65.3" x2="544" y2="65.3" class="grid"/><text x="38" y="69.3" class="axis" text-anchor="end">77</text><line x1="46" y1="112.7" x2="544" y2="112.7" class="grid"/><text x="38" y="116.7" class="axis" text-anchor="end">38</text><line x1="46" y1="160.0" x2="544" y2="160.0" class="grid"/><text x="38" y="164.0" class="axis" text-anchor="end">0</text>
+  <polygon points="46,160 46.0,160.0 145.6,123.0 245.2,36.5 344.8,36.5 444.4,36.5 544.0,36.5 544,160" fill="url(#g72)" />
+  <polyline points="46.0,160.0 145.6,123.0 245.2,36.5 344.8,36.5 444.4,36.5 544.0,36.5" fill="none" stroke="#a371f7" stroke-width="2.4"
+            stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="46.0" cy="160.0" r="4" class="dot" style="fill:#a371f7"><title>epoch 0: 0</title></circle><text x="46.0" y="178.0" class="axis" text-anchor="middle">e0</text><circle cx="145.6" cy="123.0" r="4" class="dot" style="fill:#a371f7"><title>epoch 1: 30</title></circle><text x="145.6" y="178.0" class="axis" text-anchor="middle">e1</text><circle cx="245.2" cy="36.5" r="4" class="dot" style="fill:#a371f7"><title>epoch 2: 100</title></circle><text x="245.2" y="178.0" class="axis" text-anchor="middle">e2</text><circle cx="344.8" cy="36.5" r="4" class="dot" style="fill:#a371f7"><title>epoch 3: 100</title></circle><text x="344.8" y="178.0" class="axis" text-anchor="middle">e3</text><circle cx="444.4" cy="36.5" r="4" class="dot" style="fill:#a371f7"><title>epoch 4: 100</title></circle><text x="444.4" y="178.0" class="axis" text-anchor="middle">e4</text><circle cx="544.0" cy="36.5" r="4" class="dot" style="fill:#a371f7"><title>epoch 5: 100</title></circle><text x="544.0" y="178.0" class="axis" text-anchor="middle">e5</text>
+  <text x="46" y="186" class="axis">skill hit rate %</text>
+</svg>
+    </div>
+  </div>
+
+  <h2>逐轮明细</h2>
+  <table>
+    <thead><tr>
+      <th>epoch</th><th>成功</th><th>Δ</th><th>步数</th><th>tokens</th><th>Δ</th>
+      <th>技能数</th><th>命中率</th><th>教训数</th>
+    </tr></thead>
+    <tbody><tr><td>e0</td><td>30%</td><td class=''></td><td>2.80</td><td>1536</td><td class=''></td><td>3</td><td>0%</td><td>7</td></tr><tr><td>e1</td><td>100%</td><td class='up'>+70%</td><td>2.30</td><td>1354</td><td class='up'>-182</td><td>10</td><td>30%</td><td>7</td></tr><tr><td>e2</td><td>100%</td><td class=''>+0%</td><td>1.00</td><td>613</td><td class='up'>-741</td><td>10</td><td>100%</td><td>7</td></tr><tr><td>e3</td><td>100%</td><td class=''>+0%</td><td>1.00</td><td>613</td><td class=''>+0</td><td>10</td><td>100%</td><td>7</td></tr><tr><td>e4</td><td>100%</td><td class=''>+0%</td><td>1.00</td><td>613</td><td class=''>+0</td><td>10</td><td>100%</td><td>7</td></tr><tr><td>e5</td><td>100%</td><td class=''>+0%</td><td>1.00</td><td>613</td><td class=''>+0</td><td>10</td><td>100%</td><td>7</td></tr></tbody>
+  </table>
+
+  <h2>习得的技能库</h2>
+  <div class="skills"><span class="chip">flatten_into_single_flat_list</span><span class="chip">group_key_sum_within_each</span><span class="chip">maximum</span><span class="chip">merge_adding_shared_keys</span><span class="chip">most_frequent_word_lowercase</span><span class="chip">moving_average</span><span class="chip">palindrome</span><span class="chip">second_largest</span><span class="chip">sum_squares_even</span><span class="chip">total</span></div>
+
+  <h2>方法论与局限</h2>
+  <div class="note"><strong>Read this before quoting these numbers.</strong> This run used the deterministic <code>replay</code> adapter -- a scripted agent, not a language model. It demonstrates that the <em>mechanism</em> works: skills and pitfalls are distilled, retrieved, and measurably improve outcome, steps, and tokens. It says nothing about how a specific frontier model behaves. For that, run with <code>--provider openai</code> or <code>--provider anthropic</code>.</div>
+  <div class="note">
+    两种学习信号的贡献是可分离的：<strong>成功率</strong>主要由 Pitfall（失败教训）驱动，
+    因为被警告过的 agent 会绕开已知陷阱；<strong>步数与 Token</strong>主要由 Skill（成功技能）驱动，
+    因为蒸馏出的函数把多步推导压缩成一次调用。若只升成功率而步数不降，说明 pitfall 生效而
+    skill 未生效 —— 这比笼统的"变好了"更有诊断价值。
+  </div>
+
+  <footer>
+    Generated by Evolver · 单文件 HTML，无外部依赖 ·
+    复现命令 <code>evolver bench --epochs 6</code>
+  </footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,135 @@
+{
+  "summary": {
+    "epochs": 6,
+    "tasks_per_epoch": 10,
+    "success_rate": "30% -> 100%",
+    "avg_steps": "2.80 -> 1.00",
+    "avg_tokens": "1536 -> 613",
+    "token_reduction": "60%",
+    "step_reduction": "64%",
+    "skills_learned": 10,
+    "pitfalls_learned": 7,
+    "wall_time_s": 0.03
+  },
+  "epochs": [
+    {
+      "epoch": 0,
+      "success_rate": 0.3,
+      "avg_steps": 2.8,
+      "avg_tokens": 1536.0,
+      "skill_count": 3,
+      "skill_hit_rate": 0.0,
+      "pitfalls_active": 7,
+      "wall_time_s": 0.006
+    },
+    {
+      "epoch": 1,
+      "success_rate": 1.0,
+      "avg_steps": 2.3,
+      "avg_tokens": 1353.8,
+      "skill_count": 10,
+      "skill_hit_rate": 0.3,
+      "pitfalls_active": 7,
+      "wall_time_s": 0.011
+    },
+    {
+      "epoch": 2,
+      "success_rate": 1.0,
+      "avg_steps": 1.0,
+      "avg_tokens": 612.6,
+      "skill_count": 10,
+      "skill_hit_rate": 1.0,
+      "pitfalls_active": 7,
+      "wall_time_s": 0.016
+    },
+    {
+      "epoch": 3,
+      "success_rate": 1.0,
+      "avg_steps": 1.0,
+      "avg_tokens": 612.6,
+      "skill_count": 10,
+      "skill_hit_rate": 1.0,
+      "pitfalls_active": 7,
+      "wall_time_s": 0.021
+    },
+    {
+      "epoch": 4,
+      "success_rate": 1.0,
+      "avg_steps": 1.0,
+      "avg_tokens": 612.6,
+      "skill_count": 10,
+      "skill_hit_rate": 1.0,
+      "pitfalls_active": 7,
+      "wall_time_s": 0.026
+    },
+    {
+      "epoch": 5,
+      "success_rate": 1.0,
+      "avg_steps": 1.0,
+      "avg_tokens": 612.6,
+      "skill_count": 10,
+      "skill_hit_rate": 1.0,
+      "pitfalls_active": 7,
+      "wall_time_s": 0.031
+    }
+  ],
+  "skills": [
+    "flatten_into_single_flat_list",
+    "group_key_sum_within_each",
+    "maximum",
+    "merge_adding_shared_keys",
+    "most_frequent_word_lowercase",
+    "moving_average",
+    "palindrome",
+    "second_largest",
+    "sum_squares_even",
+    "total"
+  ],
+  "config": {
+    "llm": {
+      "provider": "replay",
+      "model": "replay-simulated",
+      "api_key_env": "OPENAI_API_KEY",
+      "base_url": null,
+      "temperature": 0.0,
+      "max_tokens": 4096,
+      "timeout_s": 60.0
+    },
+    "context": {
+      "max_tokens": 30000,
+      "compact_threshold": 0.8,
+      "keep_recent_steps": 4,
+      "archive_summary_tokens": 400,
+      "reserve_for_answer": 2000
+    },
+    "sandbox": {
+      "timeout_s": 5.0,
+      "max_output_chars": 8000,
+      "max_memory_mb": 256,
+      "allow_imports": [
+        "math",
+        "json",
+        "re",
+        "datetime",
+        "itertools",
+        "collections",
+        "textwrap"
+      ],
+      "enabled": true
+    },
+    "evolve": {
+      "distill_enabled": true,
+      "min_steps_to_distill": 2,
+      "max_skill_tokens": 1200,
+      "curate_every_n_runs": 5,
+      "min_score_to_keep": 0.05,
+      "max_skills": 200,
+      "max_pitfalls": 100,
+      "merge_similarity": 0.75,
+      "skill_match_threshold": 0.34,
+      "top_k_skills": 3
+    },
+    "store_path": ".evolver/skills.json",
+    "verbose": false
+  }
+}
