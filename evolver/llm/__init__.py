@@ -10,11 +10,16 @@ from evolver.llm.replay import ReplayAdapter
 
 
 def build_adapter(config) -> LLMAdapter:
-    """Instantiate the adapter named by ``config.llm.provider``."""
+    """Instantiate the adapter named by ``config.llm.provider``.
+
+    ``kimi`` and ``openrouter`` both speak the OpenAI wire format, so they reuse
+    :class:`OpenAIAdapter` with a different base URL -- which is also why Kimi
+    K3 is reachable at all from a machine that could never hold its weights.
+    """
     provider = (config.llm.provider or "replay").lower()
     if provider == "replay":
         return ReplayAdapter(config=config.llm)
-    if provider == "openai":
+    if provider in ("openai", "kimi", "openrouter", "openai-compatible"):
         from evolver.llm.vendors import OpenAIAdapter
 
         return OpenAIAdapter(config=config.llm)
@@ -22,7 +27,10 @@ def build_adapter(config) -> LLMAdapter:
         from evolver.llm.vendors import AnthropicAdapter
 
         return AnthropicAdapter(config=config.llm)
-    raise ValueError(f"unknown provider: {provider!r}")
+    raise ValueError(
+        f"unknown provider: {provider!r}; "
+        f"expected one of replay|openai|kimi|openrouter|anthropic"
+    )
 
 
 __all__ = ["LLMAdapter", "LLMResponse", "ReplayAdapter", "build_adapter"]

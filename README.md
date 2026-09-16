@@ -168,6 +168,39 @@ LLM-driven distillation activates automatically with a live provider — a model
 generalises the trajectory instead of the heuristic lifting the final
 expression, and models the *reason* a failure happened.
 
+### Kimi K3
+
+Kimi K3 (2.8T MoE, 896 experts / 16 active, 1M context) cannot be self-hosted
+here — or on most hardware:
+
+| | size |
+|---|---:|
+| BF16 weights | 5,178 GB |
+| FP8 weights | 2,589 GB |
+| INT4 weights (smallest) | **1,295 GB** |
+| Minimum VRAM to serve | **~1,680 GB** |
+| Minimum deployment | 6× B300 or 8× H200 |
+
+It is reachable through an OpenAI-compatible endpoint instead, which is what
+these presets wire up:
+
+```bash
+# OpenRouter — 16 providers host K3; $3/$15 per 1M in/out
+export OPENROUTER_API_KEY=sk-or-v1-...
+evolver bench --provider openrouter            # moonshotai/kimi-k3
+
+# Moonshot's own platform — $0.30/M on cache hits (90% off)
+export MOONSHOT_API_KEY=sk-...
+evolver bench --provider kimi
+
+# Any OpenAI-compatible endpoint (vLLM, Ollama, LM Studio, ...)
+evolver bench --provider openai --base-url http://localhost:11434/v1 --model qwen3:30b
+```
+
+Self-hosting only breaks even above roughly **2 billion output tokens/month**,
+against ~$23k–37k/month for an 8×H200 node. Below that, or with bursty demand,
+the API is cheaper and involves no cluster to babysit.
+
 ---
 
 ## Architecture

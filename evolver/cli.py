@@ -14,6 +14,9 @@ import sys
 from typing import List, Optional
 
 
+PROVIDERS = ["replay", "openai", "anthropic", "kimi", "openrouter"]
+
+
 def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="evolver",
@@ -26,9 +29,12 @@ def _build_parser() -> argparse.ArgumentParser:
     b = sub.add_parser("bench", help="run the evolution benchmark")
     b.add_argument("--epochs", type=int, default=5)
     b.add_argument("--tasks", type=int, default=0, help="limit task count (0 = all)")
-    b.add_argument("--provider", default="replay",
-                   choices=["replay", "openai", "anthropic"])
+    b.add_argument("--provider", default="replay", choices=PROVIDERS)
     b.add_argument("--model", default=None)
+    b.add_argument("--base-url", default=None,
+                   help="custom OpenAI-compatible endpoint")
+    b.add_argument("--api-key-env", default=None,
+                   help="env var holding the API key")
     b.add_argument("--seed", type=int, default=42)
     b.add_argument("--max-steps", type=int, default=8)
     b.add_argument("--store", default=".evolver/skills.json")
@@ -41,9 +47,10 @@ def _build_parser() -> argparse.ArgumentParser:
     # -- run -------------------------------------------------------------
     r = sub.add_parser("run", help="run a single task through the engine")
     r.add_argument("task")
-    r.add_argument("--provider", default="replay",
-                   choices=["replay", "openai", "anthropic"])
+    r.add_argument("--provider", default="replay", choices=PROVIDERS)
     r.add_argument("--model", default=None)
+    r.add_argument("--base-url", default=None)
+    r.add_argument("--api-key-env", default=None)
     r.add_argument("--store", default=".evolver/skills.json")
     r.add_argument("--max-steps", type=int, default=8)
     r.add_argument("--verbose", "-v", action="store_true")
@@ -64,6 +71,10 @@ def _config_from_args(args) -> "Config":
 
     cfg = Config.for_provider(args.provider, model=getattr(args, "model", None))
     cfg.store_path = getattr(args, "store", ".evolver/skills.json")
+    if getattr(args, "base_url", None):
+        cfg.llm.base_url = args.base_url
+    if getattr(args, "api_key_env", None):
+        cfg.llm.api_key_env = args.api_key_env
     if getattr(args, "no_evolve", False):
         cfg.evolve.distill_enabled = False
     return cfg

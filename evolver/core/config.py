@@ -141,6 +141,16 @@ class Config:
             "anthropic": LLMConfig(provider="anthropic",
                                    model=model or "claude-sonnet-4-20250514",
                                    api_key_env="ANTHROPIC_API_KEY"),
+            # Kimi K3 (2.8T MoE) is not self-hostable on ordinary hardware --
+            # roughly 1.3 TB of weights at INT4 and ~1.7 TB VRAM to serve. It is
+            # reached through an OpenAI-compatible endpoint instead.
+            "kimi": LLMConfig(provider="kimi", model=model or "kimi-k3",
+                              api_key_env="MOONSHOT_API_KEY",
+                              base_url="https://api.moonshot.cn/v1"),
+            "openrouter": LLMConfig(provider="openrouter",
+                                    model=model or "moonshotai/kimi-k3",
+                                    api_key_env="OPENROUTER_API_KEY",
+                                    base_url="https://openrouter.ai/api/v1"),
             "replay": LLMConfig(provider="replay", model=model or "replay-simulated"),
         }
         if provider not in presets:

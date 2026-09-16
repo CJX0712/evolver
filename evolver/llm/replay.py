@@ -30,9 +30,8 @@ import random
 import re
 import time
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
-from evolver.bench.tasks import BENCH_TASKS, BenchTask, find_task
 from evolver.core.config import LLMConfig
 from evolver.llm.base import LLMAdapter, LLMResponse
 
@@ -47,7 +46,10 @@ _STATE_TURN_RE = re.compile(r"^turn\s*=\s*(\d+)", re.MULTILINE)
 class ReplayAdapter(LLMAdapter):
     """Deterministic stand-in for a real model."""
 
-    tasks: List[BenchTask] = field(default_factory=lambda: list(BENCH_TASKS))
+    # ``tasks`` is injected, not imported: the adapter must not depend on the
+    # benchmark layer at import time, or you get llm -> bench -> core.engine ->
+    # llm and the package stops being importable on its own.
+    tasks: Optional[List[Any]] = None
     seed: int = 42
     jitter: float = 0.0          # set >0 to model a flaky model
     config: LLMConfig = field(default_factory=lambda: LLMConfig(provider="replay"))
@@ -103,6 +105,17 @@ class ReplayAdapter(LLMAdapter):
                 return node.name, len(node.args.args)
         return None
 
+    def _find_task(self, text: str) -> Optional[Any]:
+        """Match task text to a spec, from the injected set or the built-in one."""
+        if self.tasks is not None:
+            for t in self.tasks:
+                if re.search(t.match, text, re.IGNORECASE):
+                    return t
+            return None
+        from evolver.bench.tasks import find_task  # deferred: breaks an import cycle
+
+        return find_task(text)
+
     # -- the model -------------------------------------------------------
     def complete(
         self,
@@ -116,7 +129,7 @@ class ReplayAdapter(LLMAdapter):
         self.calls += 1
 
         task_text = self._task_text(user)
-        spec: Optional[BenchTask] = find_task(task_text)
+        spec = self._find_task(task_text)
         turn = self._turn(user)
         warned = self._has_warnings(user)
 
