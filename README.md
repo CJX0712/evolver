@@ -307,7 +307,7 @@ Stated plainly, because a benchmark that hides its caveats is marketing:
 ## Testing
 
 ```bash
-pytest -q          # 150 tests, ~8s
+pytest -q          # 152 tests, ~9s
 ```
 
 Includes a control-group test (`test_control_run_does_not_improve`) that fails

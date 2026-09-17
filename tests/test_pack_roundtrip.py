@@ -174,3 +174,32 @@ def test_import_dry_run_touches_nothing(tmp_path):
     report = import_pack(dst, load_pack(blob), dry_run=True)
     assert report.added
     assert not dst.skills
+
+
+# -- CLI argument handling ----------------------------------------------
+
+def _bench_args(**kw):
+    from argparse import Namespace
+    base = dict(provider="replay", model=None, store=".evolver/skills.json",
+                base_url=None, api_key_env=None, no_evolve=False,
+                resume=False, no_save=False, epochs=1, tasks=0, seed=42,
+                max_steps=4, out="", json_out=None, verbose=False)
+    base.update(kw)
+    return Namespace(**base)
+
+
+def test_resume_and_no_save_are_rejected_together(capsys):
+    """Otherwise --resume silently degrades into a cold run."""
+    from evolver.cli import _cmd_bench
+
+    rc = _cmd_bench(_bench_args(resume=True, no_save=True))
+    assert rc == 2
+    assert "--resume and --no-save cannot be combined" in capsys.readouterr().err
+
+
+def test_no_save_alone_still_runs(capsys, tmp_path):
+    from evolver.cli import _cmd_bench
+
+    rc = _cmd_bench(_bench_args(no_save=True, out=str(tmp_path / "r.html")))
+    assert rc == 0
+    assert "not saving to" in capsys.readouterr().out

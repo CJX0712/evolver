@@ -120,7 +120,16 @@ def _cmd_bench(args) -> int:
     from evolver.bench.tasks import BENCH_TASKS
 
     cfg = _config_from_args(args)
+    if args.resume and args.no_save:
+        # These two are contradictory: --resume means "read the library at
+        # --store", --no-save means "write nothing there". Silently blanking
+        # store_path first would turn --resume into a no-op and quietly
+        # report a cold run as if it had resumed, so refuse instead.
+        print("--resume and --no-save cannot be combined: --no-save clears "
+              "the store path that --resume would read", file=sys.stderr)
+        return 2
     cfg.load_existing_store = bool(args.resume)
+    no_save_path = cfg.store_path
     if args.no_save:
         cfg.store_path = ""
     tasks = list(BENCH_TASKS)
@@ -132,6 +141,8 @@ def _cmd_bench(args) -> int:
         note = " (evolution OFF)"
     elif args.resume:
         note = f" (resuming {args.store})"
+    elif args.no_save:
+        note = f" (not saving to {no_save_path})"
     print(f"evolver: {len(tasks)} tasks x {args.epochs} epochs "
           f"via {args.provider}{note}")
 
