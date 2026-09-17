@@ -307,13 +307,38 @@ Stated plainly, because a benchmark that hides its caveats is marketing:
 ## Testing
 
 ```bash
-pytest -q          # 152 tests, ~9s
+pytest -q              # 152 tests, ~15s
+python3.11 scripts/check.py   # full local gate, ~20s
 ```
 
 Includes a control-group test (`test_control_run_does_not_improve`) that fails
 if the benchmark's improvement could be explained by repetition alone, and
 `tests/test_retrieval_specificity.py`, which pins the two retrieval bugs above
 so the fake-transfer signal cannot come back.
+
+### The local gate
+
+`scripts/check.py` runs three stages, cheapest first, and stops at the first
+failure:
+
+| Stage | What it proves |
+|---|---|
+| `import` | the package imports and its public surface is intact |
+| `tests` | the suite passes |
+| `regression` | **evolution still works** — success rises, token cost falls, and both beat a no-evolve control |
+
+The third stage exists because the first two cannot cover it. A test suite
+proves the code does what the tests say; it cannot notice that the *learning*
+quietly stopped. Verified by breaking it: making skill selection return `[]`
+left the mechanism dead but was caught as `token cost did not fall:
+1522 -> 1641` — success rate was still climbing, so nothing else complained.
+
+Use it as a pre-push hook if you want it enforced:
+
+```bash
+printf '#!/bin/sh\npython3.11 scripts/check.py || exit 1\n' > .git/hooks/pre-push
+chmod +x .git/hooks/pre-push
+```
 
 ---
 
