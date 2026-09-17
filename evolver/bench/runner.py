@@ -67,6 +67,10 @@ class BenchmarkResult:
     skill_names: List[str] = field(default_factory=list)
     pitfall_count: int = 0
     wall_time_s: float = 0.0
+    # Where the learned library landed on disk ("" when not persisted), plus a
+    # non-empty message when persistence was attempted and failed.
+    store_path: str = ""
+    persistence_error: str = ""
 
     # -- derived ---------------------------------------------------------
     @property
@@ -97,6 +101,8 @@ class BenchmarkResult:
             "skills_learned": len(self.skill_names),
             "pitfalls_learned": self.pitfall_count,
             "wall_time_s": round(self.wall_time_s, 2),
+            "store_path": self.store_path or "-",
+            "persistence_error": self.persistence_error or "-",
         }
 
 
@@ -160,6 +166,18 @@ def run_benchmark(
     result.skill_names = sorted(engine.store.skills.keys())
     result.pitfall_count = len(engine.store.pitfalls)
     result.engine = engine  # type: ignore[attr-defined]
+
+    # A run that learns skills and then drops them on the floor is not an
+    # evolution system, it is a very expensive way to compute a number.
+    # Persist so the library survives the process and can be packed/shipped.
+    result.store_path = ""
+    store_path = getattr(cfg, "store_path", "")
+    if store_path:
+        try:
+            engine.store.save(store_path)
+            result.store_path = store_path
+        except OSError as exc:  # pragma: no cover - disk issues are environmental
+            result.persistence_error = f"{type(exc).__name__}: {exc}"
     return result
 
 

@@ -23,3 +23,6 @@ Thumbs.db
 
 # Generated reports (regenerate with `evolver bench`)
 /report.html
+
+# Generated reports
+*-report.html

@@ -154,6 +154,42 @@ print(traj.status, traj.final_answer, traj.n_steps, traj.total_tokens)
 engine.save()
 ```
 
+### Moving a learned library between machines
+
+Running the benchmark writes what it learned to `--store`. A finished run is
+therefore a distributable artifact — one file, no weights:
+
+```bash
+evolver bench --epochs 6 --store alice.json          # learn
+evolver pack export --store alice.json --name bench-v1 --author alice --out bench-v1.evp
+evolver pack inspect bench-v1.evp                    # verify before shipping
+evolver pack import bench-v1.evp --store bob.json    # merge into someone else
+```
+
+Import is **additive** — it can raise a local counter, never lower one — and
+every skill's source is re-vetted through the same static sandbox check as any
+other generated code, so a pack cannot smuggle in `os.system`. Imported
+credibility is *discounted*: inherited wins are a prior, not a promotion, and a
+skill with a single off-task win loses it in transit rather than arriving
+pre-proven.
+
+```
+$ evolver pack import bench-v1.evp --store fresh.json
+10 added, 0 merged, 0 skipped, 7 pitfalls
+```
+
+### Loading an existing library
+
+Loading is **opt-in** via `--resume`, and that is deliberate. When it was
+implicit, running the benchmark twice produced a second run whose epoch-0
+baseline was already trained on the first run's skills — a curve measuring
+nothing. `--no-save` runs an experiment without touching the store.
+
+```bash
+evolver bench --store alice.json --resume    # continue from a saved library
+evolver bench --no-save                      # measure without writing
+```
+
 ### With a real model
 
 ```bash
@@ -232,23 +268,52 @@ Stated plainly, because a benchmark that hides its caveats is marketing:
 1. **Retrieval is lexical.** Skills and pitfalls are matched on keyword
    overlap, not embeddings. It is fast and dependency-free, but it will miss
    paraphrases. Embedding-based retrieval is the obvious next step.
-2. **`replay` results are mechanism validation, not model evaluation.**
-3. **Heuristic distillation lifts the final expression.** It cannot invent
+2. **Cross-task transfer is currently ~zero, and we measured it.** Splitting
+   the suite in half — train on five tasks, then evaluate on the five never
+   seen — a cold agent and a pack-seeded agent both land on **20%**. Seeding
+   buys nothing on held-out tasks, in either success or tokens.
+
+   Getting to that number required fixing two retrieval bugs that had been
+   *manufacturing* a fake transfer signal:
+
+   - `sum_squares_even` carries the trigger `"even squares sum"`. The task
+     `group_and_sum` says "…and **sum** 'v' within each group". Sharing one
+     generic word was enough to inject the skill, and any perturbation to a
+     run that happens to succeed was booked as a generalisation win.
+   - The same flaw in `Pitfall.matches` meant a warning about *even squares*
+     fired on *group and sum*, which flipped that task from failure to
+     success.
+
+   Both are now gated on a **specific** (non-generic) term matching, and
+   off-task credit additionally requires a shared specific term. The old
+   scoreboard read "+20% transfer"; the true figure is 0%. See
+   `tests/test_retrieval_specificity.py`.
+
+   This is the honest state of the art for a 10-task suite: skills transfer
+   within a task family (shown above, `[5, 5, 4, 3]` → `[9, 9, 8, 2, 7]`) but
+   not across families. A library that generalises needs either real semantic
+   retrieval or enough tasks that families overlap.
+3. **`replay` results are mechanism validation, not model evaluation.**
+4. **Heuristic distillation lifts the final expression.** It cannot invent
    control flow the trajectory did not contain. The LLM path is stronger; the
    heuristic path exists so the pipeline runs with no API key.
-4. **Ten tasks is a small suite.** Enough to show the mechanism and its
-   ablation, not enough to rank models.
+5. **Ten tasks is a small suite.** Enough to show the mechanism and its
+   ablation, not enough to rank models. Five held-out tasks means a single
+   flip moves the score 20 points — which is exactly why the transfer study
+   above reports per-task outcomes and repeated seeds, not one aggregate.
 
 ---
 
 ## Testing
 
 ```bash
-pytest -q          # 72 tests, ~1s
+pytest -q          # 150 tests, ~8s
 ```
 
 Includes a control-group test (`test_control_run_does_not_improve`) that fails
-if the benchmark's improvement could be explained by repetition alone.
+if the benchmark's improvement could be explained by repetition alone, and
+`tests/test_retrieval_specificity.py`, which pins the two retrieval bugs above
+so the fake-transfer signal cannot come back.
 
 ---
 

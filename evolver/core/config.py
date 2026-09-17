@@ -94,6 +94,14 @@ class Config:
     sandbox: SandboxConfig = field(default_factory=SandboxConfig)
     evolve: EvolveConfig = field(default_factory=EvolveConfig)
     store_path: str = ".evolver/skills.json"
+    # Whether an existing store at ``store_path`` should be loaded on startup.
+    #
+    # Defaults to False, and that default is load-bearing. When it was implicit,
+    # simply running the benchmark twice produced a second run that started
+    # already trained on the first run's skills -- so the "epoch 0" baseline was
+    # no longer a baseline, and a curve that measures learning measured nothing.
+    # Loading a prior library is a deliberate act; make the caller ask.
+    load_existing_store: bool = False
     verbose: bool = False
 
     # -- serialisation ---------------------------------------------------
@@ -104,6 +112,7 @@ class Config:
             "sandbox": self.sandbox.to_dict(),
             "evolve": self.evolve.to_dict(),
             "store_path": self.store_path,
+            "load_existing_store": self.load_existing_store,
             "verbose": self.verbose,
         }
 
@@ -126,6 +135,7 @@ class Config:
         if "evolve" in d:
             cfg.evolve = EvolveConfig(**d["evolve"])
         cfg.store_path = d.get("store_path", cfg.store_path)
+        cfg.load_existing_store = bool(d.get("load_existing_store", False))
         cfg.verbose = bool(d.get("verbose", False))
         return cfg
 

@@ -89,10 +89,26 @@ class SkillStore:
         return self.skills.get(name)
 
     # -- outcome tracking ------------------------------------------------
-    def record_skill_use(self, name: str, success: bool, tokens_saved: int = 0) -> None:
+    def record_skill_use(
+        self,
+        name: str,
+        success: bool,
+        tokens_saved: int = 0,
+        off_task: bool = False,
+    ) -> None:
+        """Update a skill's record.
+
+        ``off_task`` marks a run whose task differs from the trajectory the
+        skill was distilled from. Those are counted twice -- once overall, once
+        separately -- because the overall number is dominated by home-field
+        wins and hides whether anything generalised.
+        """
         s = self.skills.get(name)
-        if s:
-            s.stats.record(success, tokens_saved)
+        if s is None:
+            return
+        s.stats.record(success, tokens_saved)
+        if off_task:
+            s.stats.record_off_task(success)
 
     def record_pitfall_outcome(self, pitfall_id: str, avoided: bool) -> None:
         p = self.pitfalls.get(pitfall_id)
@@ -101,9 +117,9 @@ class SkillStore:
             if avoided:
                 p.avoids += 1
 
-    def touch_all(self, names: List[str], success: bool) -> None:
+    def touch_all(self, names: List[str], success: bool, off_task: bool = False) -> None:
         for n in names:
-            self.record_skill_use(n, success)
+            self.record_skill_use(n, success, off_task=off_task)
 
     # -- persistence -----------------------------------------------------
     def to_dict(self) -> Dict[str, Any]:
@@ -157,12 +173,19 @@ class SkillStore:
     def stats(self) -> Dict[str, Any]:
         skills = list(self.skills.values())
         used = [s for s in skills if s.stats.uses]
+        off_uses = sum(s.stats.off_task_uses for s in skills)
+        off_wins = sum(s.stats.off_task_successes for s in skills)
         return {
             "runs": self.runs,
             "skills": len(skills),
             "skills_used": len(used),
             "skill_success_rate": (sum(s.stats.successes for s in skills)
                                    / max(1, sum(s.stats.uses for s in skills))),
+            # The headline rate above is inflated by home-field wins; this pair
+            # is the honest measure of whether the library transfers at all.
+            "off_task_uses": off_uses,
+            "off_task_success_rate": round(off_wins / off_uses, 6) if off_uses else 0.0,
+            "transferable_skills": sum(1 for s in skills if s.stats.off_task_successes),
             "pitfalls": len(self.pitfalls),
             "tokens_saved": sum(s.stats.tokens_saved for s in skills),
             "avg_generation": (sum(s.generation for s in skills) / len(skills)) if skills else 0.0,

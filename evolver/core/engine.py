@@ -47,7 +47,16 @@ class Evolver:
 
     def __post_init__(self) -> None:
         self.adapter = self.adapter or build_adapter(self.config)
-        self.store = self.store or SkillStore.load(self.config.store_path)
+        # An existing library is loaded only when the caller opted in. Silently
+        # resuming whatever happens to sit at ``store_path`` makes a run
+        # dependent on filesystem history -- rerun a benchmark and its "before"
+        # epoch is already trained, which quietly invalidates every measurement
+        # the library makes about itself.
+        if self.store is None:
+            if self.config.load_existing_store:
+                self.store = SkillStore.load(self.config.store_path)
+            else:
+                self.store = SkillStore()
         self.executor = CodeActExecutor(tools=self.tools, config=self.config.sandbox)
         self.distiller = Distiller(
             adapter=self.adapter if self.config.llm.provider != "replay" else None,
@@ -167,8 +176,35 @@ class Evolver:
 
         baseline = self._baseline_tokens.setdefault(task, traj.total_tokens)
         saved = max(0, baseline - traj.total_tokens) if traj.succeeded else 0
+
         for name in used:
-            self.store.record_skill_use(name, traj.succeeded, saved // max(1, len(used)))
+            skill = self.store.get(name)
+            # Was this a home-field win or a real transfer? A skill carries the
+            # task text it was distilled from, so comparing that against the
+            # current task is how we tell -- and only the second kind is
+            # evidence that the library generalises.
+            off_task = bool(
+                skill is not None
+                and skill.source_trajectory
+                and task.strip()[:80] not in skill.source_trajectory
+            )
+            # ...but "different task" is not the same as "relevant transfer".
+            # A skill injected purely because it shares a stopword will often
+            # be credited with a win that had nothing to do with it. Observed
+            # in practice: `sum_squares_even` matched `group_and_sum` on the
+            # single word "sum", the run succeeded anyway, and the library
+            # banked a transfer that never happened. Require a shared *specific*
+            # term before calling it a transfer, so retrieval cannot farm
+            # credit with common words.
+            if off_task and skill is not None and not skill.shares_specific_term(task):
+                off_task = False
+            self.store.record_skill_use(
+                name, traj.succeeded, saved // max(1, len(used)), off_task=off_task
+            )
+            if off_task:
+                transfers = traj.metadata.setdefault("off_task_uses", [])
+                transfers.append(name)
+
         traj.metadata["skills_used"] = used
         traj.metadata["skill_hit"] = True
 

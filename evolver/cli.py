@@ -38,6 +38,11 @@ def _build_parser() -> argparse.ArgumentParser:
     b.add_argument("--seed", type=int, default=42)
     b.add_argument("--max-steps", type=int, default=8)
     b.add_argument("--store", default=".evolver/skills.json")
+    b.add_argument("--resume", action="store_true",
+                   help="start from the library already at --store instead of empty "
+                        "(without this, a stale store cannot leak into the baseline)")
+    b.add_argument("--no-save", action="store_true",
+                   help="do not write the learned library back to --store")
     b.add_argument("--out", default="evolver-report.html")
     b.add_argument("--json", dest="json_out", default=None)
     b.add_argument("--no-evolve", action="store_true",
@@ -59,6 +64,35 @@ def _build_parser() -> argparse.ArgumentParser:
     s = sub.add_parser("skills", help="inspect the learned library")
     s.add_argument("--store", default=".evolver/skills.json")
     s.add_argument("--top", type=int, default=20)
+
+    # -- pack ------------------------------------------------------------
+    pk = sub.add_parser(
+        "pack", help="export/import a portable skill pack",
+        description="Move an evolved skill library between machines or people.",
+    )
+    pk_sub = pk.add_subparsers(dest="pack_cmd", required=True)
+
+    ex = pk_sub.add_parser("export", help="write a skill pack")
+    ex.add_argument("--store", default=".evolver/skills.json")
+    ex.add_argument("--out", default="skillpack.json")
+    ex.add_argument("--name", default="skillpack")
+    ex.add_argument("--author", default="")
+    ex.add_argument("--description", default="")
+    ex.add_argument("--min-uses", type=int, default=0,
+                    help="only export skills with at least this many uses")
+    ex.add_argument("--only-proven", action="store_true",
+                    help="only export skills with off-task wins (real transfer)")
+
+    im = pk_sub.add_parser("import", help="merge a skill pack into a store")
+    im.add_argument("path")
+    im.add_argument("--store", default=".evolver/skills.json")
+    im.add_argument("--no-discount", action="store_true",
+                    help="trust imported stats at face value (not recommended)")
+    im.add_argument("--dry-run", action="store_true",
+                    help="report what would happen without writing")
+
+    ins = pk_sub.add_parser("inspect", help="summarise a pack without importing")
+    ins.add_argument("path")
 
     # -- init ------------------------------------------------------------
     i = sub.add_parser("init", help="write a default config file")
@@ -86,12 +120,20 @@ def _cmd_bench(args) -> int:
     from evolver.bench.tasks import BENCH_TASKS
 
     cfg = _config_from_args(args)
+    cfg.load_existing_store = bool(args.resume)
+    if args.no_save:
+        cfg.store_path = ""
     tasks = list(BENCH_TASKS)
     if args.tasks:
         tasks = tasks[: args.tasks]
 
+    note = ""
+    if args.no_evolve:
+        note = " (evolution OFF)"
+    elif args.resume:
+        note = f" (resuming {args.store})"
     print(f"evolver: {len(tasks)} tasks x {args.epochs} epochs "
-          f"via {args.provider}" + (" (evolution OFF)" if args.no_evolve else ""))
+          f"via {args.provider}{note}")
 
     result = run_benchmark(cfg, tasks=tasks, epochs=args.epochs, seed=args.seed,
                            max_steps=args.max_steps, verbose=args.verbose)
@@ -152,6 +194,78 @@ def _cmd_skills(args) -> int:
     return 0
 
 
+def _cmd_pack(args) -> int:
+    from evolver.evolve.pack import (
+        build_pack, describe_pack, import_pack, load_pack, write_pack,
+    )
+    from evolver.evolve.store import SkillStore
+
+    if args.pack_cmd == "export":
+        store = SkillStore.load(args.store)
+        if not store.skills:
+            print(f"no skills in {args.store} -- nothing to export")
+            return 1
+        pack = build_pack(
+            store, name=args.name, author=args.author,
+            description=args.description, min_uses=args.min_uses,
+            only_proven=args.only_proven,
+        )
+        m = pack["manifest"]
+        if not pack["skills"]:
+            print("filters excluded every skill -- pack would be empty")
+            return 1
+        path = write_pack(pack, args.out)
+        print(f"exported {m['skill_count']} skills, "
+              f"{m['pitfall_count']} pitfalls -> {path}")
+        if args.only_proven:
+            print(f"  ({m['proven_skill_count']} proven skills in the source library)")
+        return 0
+
+    if args.pack_cmd == "import":
+        store = SkillStore.load(args.store)
+        try:
+            pack = load_pack(args.path)
+        except (OSError, ValueError) as exc:
+            print(f"cannot read pack: {exc}")
+            return 1
+        report = import_pack(store, pack, discount_stats=not args.no_discount,
+                             dry_run=args.dry_run)
+        prefix = "[dry-run] " if args.dry_run else ""
+        print(f"{prefix}{report.summary()}")
+        for name in report.added:
+            print(f"  + {name}")
+        for name in report.merged:
+            print(f"  ~ {name}")
+        if report.rejected:
+            print("  REJECTED -- pack not imported:")
+            for r in report.rejected[:10]:
+                print(f"    ! {r}")
+        if not args.dry_run and report.ok:
+            store.save(args.store)
+            print(f"saved -> {args.store}")
+        return 0 if report.ok else 1
+
+    if args.pack_cmd == "inspect":
+        try:
+            d = describe_pack(load_pack(args.path))
+        except (OSError, ValueError) as exc:
+            print(f"cannot read pack: {exc}")
+            return 1
+        for k, v in d.items():
+            if k == "problems":
+                continue
+            print(f"  {k:16s} {v}")
+        if d["problems"]:
+            print("\n  PROBLEMS:")
+            for p in d["problems"]:
+                print(f"    ! {p}")
+            return 1
+        print("\n  pack is valid and loadable")
+        return 0
+
+    return 1
+
+
 def _cmd_init(args) -> int:
     from evolver.core.config import Config
 
@@ -165,7 +279,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser = _build_parser()
     args = parser.parse_args(argv)
     handlers = {"bench": _cmd_bench, "run": _cmd_run,
-                "skills": _cmd_skills, "init": _cmd_init}
+                "skills": _cmd_skills, "pack": _cmd_pack, "init": _cmd_init}
     return handlers[args.cmd](args)
 
 
