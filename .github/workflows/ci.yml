@@ -43,6 +43,7 @@ jobs:
             grep -viE '^(llama[-_]cpp[-_]python|pywin32|audioop-lts)' "$f" > "/tmp/f_$f" || true
             python -m pip install -r "/tmp/f_$f" || echo "::warning::install from $f failed (advisory)"
           done
+          python -m pip install pytest || echo "::warning::pytest install failed (advisory)"
 
       - name: Unit tests
         run: |
